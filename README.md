@@ -3,6 +3,8 @@
 A [pi](https://pi.dev) extension that controls OpenAI's **service tier** for
 GPT-5.4 / GPT-5.5 from inside pi.
 
+![pi-gpt-fast-mode preview](https://raw.githubusercontent.com/devwithpug/pi-gpt-fast-mode/main/assets/preview.png)
+
 Unlike a simple on/off "fast mode", this lets you pick the tier:
 
 - **`priority`** — faster, premium (the classic "fast mode")
