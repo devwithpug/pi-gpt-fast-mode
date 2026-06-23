@@ -13,7 +13,16 @@ Unlike a simple on/off "fast mode", this lets you pick the tier:
 It shows the active tier in the TUI and hands the preference off to subagents
 automatically.
 
+> [npm](https://www.npmjs.com/package/pi-gpt-fast-mode) ·
+> [Pi Package Gallery](https://pi.dev/packages/pi-gpt-fast-mode)
+
 ## Install
+
+```bash
+pi install npm:pi-gpt-fast-mode
+```
+
+Or install from git:
 
 ```bash
 pi install git:github.com/devwithpug/pi-gpt-fast-mode
@@ -22,7 +31,7 @@ pi install git:github.com/devwithpug/pi-gpt-fast-mode
 Try it for a single run without installing:
 
 ```bash
-pi -e git:github.com/devwithpug/pi-gpt-fast-mode
+pi -e npm:pi-gpt-fast-mode
 ```
 
 ## Usage
