@@ -66,12 +66,14 @@ export default function gptFastModeExtension(pi: ExtensionAPI): void {
   }
 
   function refreshIndicator(ctx: ExtensionContext): void {
-    updateIndicator(
-      ctx,
-      config.models.length ? config.indicator : "off",
-      state.isActive(),
-      tierLabel(state.serviceTier()),
-    );
+    const mode = config.models.length ? config.indicator : "off";
+    const desired = state.isDesired();
+    const active = state.isActive();
+    let label = tierLabel(state.serviceTier());
+    // "armed": desired but the current model can't use it; it is handed off to
+    // subagents instead. The \u21e2 marker signals "passed downstream".
+    if (desired && !active) label = `${label}\u21e2`;
+    updateIndicator(ctx, mode, desired, label);
   }
 
   async function persistIfEnabled(): Promise<void> {
@@ -128,7 +130,6 @@ export default function gptFastModeExtension(pi: ExtensionAPI): void {
 
   function reportStatus(ctx: ExtensionContext): void {
     const desired = state.isDesired();
-    const supported = state.isModelSupported();
     const model = currentModel(ctx);
     const where = model ? `${model.provider}/${model.id}` : "unknown model";
     const tier = state.serviceTier();
@@ -138,9 +139,9 @@ export default function gptFastModeExtension(pi: ExtensionAPI): void {
     } else if (state.isActive()) {
       msg = `Fast Mode is ON \u2014 requesting "${tier}" on ${where}`;
     } else {
-      msg = `Fast Mode is ON but ${where} is not supported; "${tier}" not requested`;
+      msg = `Fast Mode is ON and handed off to subagents ("${tier}"). ${where} is not a supported GPT model, so this session won't request it \u2014 subagents on GPT-5.4/5.5 will.`;
     }
-    ctx.ui.notify(msg, supported || !desired ? "info" : "warning");
+    ctx.ui.notify(msg, "info");
   }
 
   function announce(ctx: ExtensionContext): void {
@@ -153,9 +154,11 @@ export default function gptFastModeExtension(pi: ExtensionAPI): void {
     if (state.isActive()) {
       ctx.ui.notify(`Fast Mode enabled \u2014 service tier "${tier}"`, "info");
     } else {
+      const model = currentModel(ctx);
+      const where = model ? `${model.provider}/${model.id}` : "the current model";
       ctx.ui.notify(
-        `Fast Mode enabled ("${tier}"), but the current model is unsupported \u2014 switch to a GPT-5.4/5.5 model to use it`,
-        "warning",
+        `Fast Mode enabled ("${tier}") and handed off to subagents. ${where} is not a supported GPT model, so this session won't request it \u2014 but subagents on GPT-5.4/5.5 will inherit it.`,
+        "info",
       );
     }
   }

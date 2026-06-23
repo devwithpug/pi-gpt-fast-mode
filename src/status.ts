@@ -39,14 +39,14 @@ export function clearIndicator(ctx: StatusUI): void {
 }
 
 /**
- * Reflect the current active state in the configured indicator surface.
- * `active` is true only when Fast Mode is genuinely applied to requests.
- * `label` is the text shown when active (e.g. "fast", "flex").
+ * Reflect the current state in the configured indicator surface.
+ * `show` is true when the indicator should appear (active or armed-for-subagents).
+ * `label` is the text shown (e.g. "fast", "flex", or "fast\u21e2" when armed).
  */
 export function updateIndicator(
   ctx: StatusUI,
   mode: IndicatorMode,
-  active: boolean,
+  show: boolean,
   label: string,
 ): void {
   if (!canRender(ctx)) return;
@@ -54,7 +54,7 @@ export function updateIndicator(
   // Always clear first so switching modes / state never leaves a stale entry.
   clearIndicator(ctx);
 
-  if (!active || mode === "off") return;
+  if (!show || mode === "off") return;
 
   if (mode === "widget" && typeof ctx.ui?.setWidget === "function") {
     ctx.ui.setWidget(

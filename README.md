@@ -74,6 +74,13 @@ usual. The preference is exported as the `PI_GPT_FAST_MODE` environment variable
 (`1` / `0`), which child pi processes inherit on startup. A subagent only sends
 the tier request when it is also on a supported model.
 
+**Parent on an unsupported model is fine.** If your parent session runs a
+non-GPT model (e.g. Claude) and you only use GPT-5.4/5.5 in subagents, just run
+`/fast` in the parent anyway. The preference is still recorded and handed off —
+the parent simply won't request a tier for itself, but subagents on GPT-5.4/5.5
+will. The TUI indicator shows `fast⇢` in that "armed" state to signal the
+preference is passed downstream.
+
 To verify, ask a subagent to print `PI_GPT_FAST_MODE`; `1` means the preference
 was handed off.
 
