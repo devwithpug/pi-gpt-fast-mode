@@ -11,7 +11,8 @@ import { dirname, join, resolve } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 import {
   DEFAULT_MODELS,
-  DEFAULT_SERVICE_TIER,
+  DEFAULT_TIER,
+  isServiceTier,
   PACKAGE_NAME,
   type FastConfig,
   type IndicatorMode,
@@ -20,7 +21,7 @@ import {
 export const DEFAULT_CONFIG: FastConfig = {
   persist: false,
   desired: false,
-  serviceTier: DEFAULT_SERVICE_TIER,
+  tier: DEFAULT_TIER,
   models: [...DEFAULT_MODELS],
   indicator: "status",
 };
@@ -37,7 +38,7 @@ export function cloneConfig(config: FastConfig = DEFAULT_CONFIG): FastConfig {
   return {
     persist: config.persist,
     desired: config.desired,
-    serviceTier: config.serviceTier,
+    tier: config.tier,
     models: [...config.models],
     indicator: config.indicator,
   };
@@ -60,8 +61,8 @@ export function normalizeConfig(
   if (typeof raw.persist === "boolean") safe.persist = raw.persist;
   if (typeof raw.desired === "boolean") safe.desired = raw.desired;
 
-  if (typeof raw.serviceTier === "string" && raw.serviceTier.trim() !== "") {
-    safe.serviceTier = raw.serviceTier.trim();
+  if (isServiceTier(raw.tier)) {
+    safe.tier = raw.tier;
   }
 
   if (Array.isArray(raw.models)) {

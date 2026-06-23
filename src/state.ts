@@ -5,21 +5,26 @@
 //
 // Keeping the preference separate from the runtime state means switching to an
 // unsupported model temporarily disables injection without losing the choice.
+// The selected service tier is tracked independently so users can switch
+// between priority (fast) and flex (economy) without losing on/off state.
 
 import { isSupportedModel } from "./payload.ts";
-import type { FastConfig, ModelRef } from "./types.ts";
+import type { FastConfig, ModelRef, ServiceTier } from "./types.ts";
 
 export class FastState {
   private desired = false;
   private model: ModelRef | undefined;
   private config: FastConfig;
+  private tier: ServiceTier;
 
   constructor(config: FastConfig) {
     this.config = config;
+    this.tier = config.tier;
   }
 
   setConfig(config: FastConfig): void {
     this.config = config;
+    this.tier = config.tier;
   }
 
   setModel(model: ModelRef | undefined): void {
@@ -28,6 +33,10 @@ export class FastState {
 
   setDesired(desired: boolean): void {
     this.desired = desired;
+  }
+
+  setTier(tier: ServiceTier): void {
+    this.tier = tier;
   }
 
   toggle(): boolean {
@@ -49,7 +58,7 @@ export class FastState {
     return this.desired && this.isModelSupported();
   }
 
-  serviceTier(): string {
-    return this.config.serviceTier;
+  serviceTier(): ServiceTier {
+    return this.tier;
   }
 }

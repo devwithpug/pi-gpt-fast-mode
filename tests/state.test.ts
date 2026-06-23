@@ -27,6 +27,16 @@ test("state: toggle flips desired and returns new value", () => {
   assert.equal(s.toggle(), false);
 });
 
+test("state: tier defaults from config and can be changed independently", () => {
+  const s = new FastState(DEFAULT_CONFIG);
+  assert.equal(s.serviceTier(), "priority");
+  s.setTier("flex");
+  assert.equal(s.serviceTier(), "flex");
+  // toggling on/off does not change the selected tier
+  s.toggle();
+  assert.equal(s.serviceTier(), "flex");
+});
+
 test("state: preference is retained across unsupported models", () => {
   const s = new FastState(DEFAULT_CONFIG);
   s.setDesired(true);
@@ -43,13 +53,13 @@ test("handoff: round-trips through an env map", () => {
   const env: NodeJS.ProcessEnv = {};
   assert.equal(readHandoff(env), undefined);
   writeHandoff(true, env);
-  assert.equal(env.PI_OPENAI_FAST_DESIRED, "1");
+  assert.equal(env.PI_GPT_FAST_MODE, "1");
   assert.equal(readHandoff(env), true);
   writeHandoff(false, env);
   assert.equal(readHandoff(env), false);
 });
 
 test("handoff: invalid values are treated as no opinion", () => {
-  assert.equal(readHandoff({ PI_OPENAI_FAST_DESIRED: "yes" }), undefined);
-  assert.equal(readHandoff({ PI_OPENAI_FAST_DESIRED: "" }), undefined);
+  assert.equal(readHandoff({ PI_GPT_FAST_MODE: "yes" }), undefined);
+  assert.equal(readHandoff({ PI_GPT_FAST_MODE: "" }), undefined);
 });

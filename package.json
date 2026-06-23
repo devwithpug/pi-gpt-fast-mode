@@ -1,7 +1,7 @@
 {
-  "name": "pi-openai-fastmode",
+  "name": "pi-gpt-fast-mode",
   "version": "0.1.0",
-  "description": "Pi extension that requests OpenAI's priority service tier (Fast Mode) for GPT-5.4 / GPT-5.5, with subagent hand-off.",
+  "description": "Pi extension to control OpenAI's GPT service tier (priority/flex/default/auto) for GPT-5.4 / GPT-5.5, with subagent hand-off.",
   "license": "MIT",
   "type": "module",
   "author": "devwithpug",
@@ -9,13 +9,15 @@
     "pi-package",
     "pi-extension",
     "openai",
+    "gpt-5",
     "fast-mode",
     "service-tier",
-    "priority"
+    "priority",
+    "flex"
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/devwithpug/pi-openai-fastmode.git"
+    "url": "git+https://github.com/devwithpug/pi-gpt-fast-mode.git"
   },
   "files": [
     "index.ts",

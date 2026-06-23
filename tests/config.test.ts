@@ -12,22 +12,22 @@ test("normalizeConfig keeps valid fields and falls back per-field", () => {
   const result = normalizeConfig({
     persist: true,
     desired: true,
-    serviceTier: "  flex  ",
+    tier: "flex",
     indicator: "widget",
   });
   assert.equal(result.persist, true);
   assert.equal(result.desired, true);
-  assert.equal(result.serviceTier, "flex");
+  assert.equal(result.tier, "flex");
   assert.equal(result.indicator, "widget");
   // models not provided -> default list
   assert.deepEqual(result.models, DEFAULT_CONFIG.models);
 });
 
-test("normalizeConfig ignores invalid types", () => {
+test("normalizeConfig ignores invalid types and unknown tiers", () => {
   const result = normalizeConfig({
     persist: "yes",
     desired: 1,
-    serviceTier: 123,
+    tier: "turbo",
     indicator: "turbo",
   });
   assert.deepEqual(result, DEFAULT_CONFIG);

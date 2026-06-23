@@ -1,8 +1,9 @@
-// OpenAI Fast Mode for pi
-// ------------------------
-// Requests OpenAI's `priority` service tier for supported GPT-5.4 / GPT-5.5
-// models. Toggle with `/fast`, start with `--fast`, and the preference is
-// handed off to subagents automatically.
+// GPT Fast Mode for pi
+// --------------------
+// Controls OpenAI's `service_tier` request field for supported GPT-5.4 / 5.5
+// models. Toggle the fast (priority) tier with `/fast`, pick another tier with
+// `/fast flex|priority|default|auto`, start with `--fast`, and the preference
+// is handed off to subagents automatically.
 
 import type {
   ExtensionAPI,
@@ -22,7 +23,7 @@ import {
   type LoadedConfig,
 } from "./src/config.ts";
 import { readHandoff, writeHandoff } from "./src/handoff.ts";
-import { injectServiceTier } from "./src/payload.ts";
+import { injectServiceTier, toModelRef } from "./src/payload.ts";
 import { FastState } from "./src/state.ts";
 import { clearIndicator, updateIndicator } from "./src/status.ts";
 import {
@@ -30,10 +31,24 @@ import {
   FLAG_NAME,
   type FastConfig,
   type ModelRef,
+  type ServiceTier,
 } from "./src/types.ts";
-import { toModelRef } from "./src/payload.ts";
 
-export default function openaiFastExtension(pi: ExtensionAPI): void {
+/** Short label shown in the TUI indicator for each tier. */
+function tierLabel(tier: ServiceTier): string {
+  switch (tier) {
+    case "priority":
+      return "fast";
+    case "flex":
+      return "flex";
+    case "default":
+      return "std";
+    case "auto":
+      return "auto";
+  }
+}
+
+export default function gptFastModeExtension(pi: ExtensionAPI): void {
   let loaded: LoadedConfig | undefined;
   let config: FastConfig = cloneConfig();
   const state = new FastState(config);
@@ -51,22 +66,31 @@ export default function openaiFastExtension(pi: ExtensionAPI): void {
   }
 
   function refreshIndicator(ctx: ExtensionContext): void {
-    updateIndicator(ctx, config.models.length ? config.indicator : "off", state.isActive());
+    updateIndicator(
+      ctx,
+      config.models.length ? config.indicator : "off",
+      state.isActive(),
+      tierLabel(state.serviceTier()),
+    );
   }
 
   async function persistIfEnabled(): Promise<void> {
     if (!loaded || !config.persist) return;
-    await saveConfig(loaded.path, { ...config, desired: state.isDesired() });
+    await saveConfig(loaded.path, {
+      ...config,
+      desired: state.isDesired(),
+      tier: state.serviceTier(),
+    });
   }
 
   pi.registerFlag(FLAG_NAME, {
-    description: "Start with OpenAI Fast Mode (priority tier) enabled",
+    description: "Start with GPT Fast Mode (priority service tier) enabled",
     type: "boolean",
     default: false,
   });
 
   pi.registerCommand(COMMAND_NAME, {
-    description: "Toggle OpenAI Fast Mode. " + COMMAND_USAGE,
+    description: "Control the GPT service tier. " + COMMAND_USAGE,
     getArgumentCompletions: getCommandCompletions,
     handler: async (args: string, ctx: ExtensionCommandContext) => {
       try {
@@ -78,8 +102,15 @@ export default function openaiFastExtension(pi: ExtensionAPI): void {
           return;
         }
 
-        if (action.kind === "toggle") state.toggle();
-        else state.setDesired(action.desired);
+        if (action.kind === "toggle") {
+          state.toggle();
+        } else if (action.kind === "set") {
+          state.setDesired(action.desired);
+        } else {
+          // tier: select the tier AND enable in one step
+          state.setTier(action.tier);
+          state.setDesired(true);
+        }
 
         writeHandoff(state.isDesired());
         await persistIfEnabled();
@@ -100,26 +131,30 @@ export default function openaiFastExtension(pi: ExtensionAPI): void {
     const supported = state.isModelSupported();
     const model = currentModel(ctx);
     const where = model ? `${model.provider}/${model.id}` : "unknown model";
+    const tier = state.serviceTier();
     let msg: string;
-    if (!desired) msg = "Fast Mode is OFF";
-    else if (state.isActive())
-      msg = `Fast Mode is ON \u2014 requesting "${state.serviceTier()}" on ${where}`;
-    else
-      msg = `Fast Mode is ON but ${where} is not supported; priority not requested`;
+    if (!desired) {
+      msg = `Fast Mode is OFF (tier would be "${tier}")`;
+    } else if (state.isActive()) {
+      msg = `Fast Mode is ON \u2014 requesting "${tier}" on ${where}`;
+    } else {
+      msg = `Fast Mode is ON but ${where} is not supported; "${tier}" not requested`;
+    }
     ctx.ui.notify(msg, supported || !desired ? "info" : "warning");
   }
 
   function announce(ctx: ExtensionContext): void {
     if (!ctx.hasUI) return;
+    const tier = state.serviceTier();
     if (!state.isDesired()) {
       ctx.ui.notify("Fast Mode disabled", "info");
       return;
     }
     if (state.isActive()) {
-      ctx.ui.notify(`Fast Mode enabled (${state.serviceTier()})`, "info");
+      ctx.ui.notify(`Fast Mode enabled \u2014 service tier "${tier}"`, "info");
     } else {
       ctx.ui.notify(
-        "Fast Mode enabled, but current model is unsupported \u2014 switch to a GPT-5.4/5.5 model to use it",
+        `Fast Mode enabled ("${tier}"), but the current model is unsupported \u2014 switch to a GPT-5.4/5.5 model to use it`,
         "warning",
       );
     }
@@ -134,7 +169,7 @@ export default function openaiFastExtension(pi: ExtensionAPI): void {
 
       // Resolve the desired preference at startup, in priority order:
       //   1. --fast flag
-      //   2. inherited subagent hand-off (PI_OPENAI_FAST_DESIRED)
+      //   2. inherited subagent hand-off (PI_GPT_FAST_MODE)
       //   3. persisted preference (only when persist is enabled)
       const flag = pi.getFlag(FLAG_NAME) === true;
       const handoff = readHandoff();

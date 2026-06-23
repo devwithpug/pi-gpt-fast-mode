@@ -5,9 +5,7 @@
 //   - "widget": right-aligned "fast" row below the editor via ctx.ui.setWidget
 //   - "off":    no visible indicator (injection still happens)
 
-import { STATUS_KEY, type IndicatorMode } from "./types.ts";
-
-// Loosely typed so the real ExtensionContext (with its overloaded setWidget)
+import { STATUS_KEY, type IndicatorMode } from "./types.ts";// Loosely typed so the real ExtensionContext (with its overloaded setWidget)
 // is structurally assignable. The extension passes ctx directly.
 export interface StatusUI {
   hasUI?: boolean;
@@ -19,8 +17,6 @@ export interface StatusUI {
     setWidget?: (key: string, content: any, options?: any) => void;
   };
 }
-
-const LABEL = "fast";
 
 function canRender(ctx: StatusUI): boolean {
   if (!ctx.hasUI) return false;
@@ -45,11 +41,13 @@ export function clearIndicator(ctx: StatusUI): void {
 /**
  * Reflect the current active state in the configured indicator surface.
  * `active` is true only when Fast Mode is genuinely applied to requests.
+ * `label` is the text shown when active (e.g. "fast", "flex").
  */
 export function updateIndicator(
   ctx: StatusUI,
   mode: IndicatorMode,
   active: boolean,
+  label: string,
 ): void {
   if (!canRender(ctx)) return;
 
@@ -62,7 +60,7 @@ export function updateIndicator(
     ctx.ui.setWidget(
       STATUS_KEY,
       () => ({
-        render: (width: number) => [rightAlign(LABEL, width)],
+        render: (width: number) => [rightAlign(label, width)],
         dispose() {},
       }),
       { placement: "belowEditor" },
@@ -70,5 +68,5 @@ export function updateIndicator(
     return;
   }
 
-  ctx.ui?.setStatus?.(STATUS_KEY, LABEL);
+  ctx.ui?.setStatus?.(STATUS_KEY, label);
 }

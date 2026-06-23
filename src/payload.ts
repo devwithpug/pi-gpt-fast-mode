@@ -1,6 +1,6 @@
 // Pure helpers for matching models and mutating provider payloads.
 
-import { DEFAULT_SERVICE_TIER, type FastConfig, type ModelRef } from "./types.ts";
+import { DEFAULT_TIER, type FastConfig, type ModelRef } from "./types.ts";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -42,5 +42,5 @@ export function injectServiceTier(
   serviceTier: string,
 ): unknown {
   if (!isRecord(payload)) return payload;
-  return { ...payload, service_tier: serviceTier || DEFAULT_SERVICE_TIER };
+  return { ...payload, service_tier: serviceTier || DEFAULT_TIER };
 }

@@ -22,14 +22,32 @@ test("parseFastCommand: status", () => {
   assert.deepEqual(parseFastCommand("status"), { kind: "status" });
 });
 
-test("parseFastCommand: invalid throws FastCommandError", () => {
-  assert.throws(() => parseFastCommand("nope"), FastCommandError);
+test("parseFastCommand: tier names select a tier", () => {
+  assert.deepEqual(parseFastCommand("flex"), { kind: "tier", tier: "flex" });
+  assert.deepEqual(parseFastCommand("PRIORITY"), {
+    kind: "tier",
+    tier: "priority",
+  });
+  assert.deepEqual(parseFastCommand(" auto "), { kind: "tier", tier: "auto" });
+  assert.deepEqual(parseFastCommand("default"), {
+    kind: "tier",
+    tier: "default",
+  });
 });
 
-test("getCommandCompletions filters by prefix", () => {
+test("parseFastCommand: invalid throws FastCommandError", () => {
+  assert.throws(() => parseFastCommand("nope"), FastCommandError);
+  assert.throws(() => parseFastCommand("turbo"), FastCommandError);
+});
+
+test("getCommandCompletions filters by prefix and includes tiers", () => {
   assert.deepEqual(
     getCommandCompletions("o").map((c) => c.value),
     ["on", "off"],
+  );
+  assert.deepEqual(
+    getCommandCompletions("fl").map((c) => c.value),
+    ["flex"],
   );
   assert.deepEqual(
     getCommandCompletions("st").map((c) => c.value),
